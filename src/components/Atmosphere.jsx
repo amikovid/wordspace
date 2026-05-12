@@ -46,50 +46,67 @@ function DustMotes({ count = 320 }) {
   )
 }
 
-// ─── Embers — small, omnidirectional sparks ────────────────────────────
-// Tiny additive-blended spheres (no implied direction). Each has its
-// own velocity vector — some rise, some sink, some drift sideways.
-// They wrap around the box so the volume stays full. Vivid orange-red
-// color with per-particle hue variation, additive over the umber bg.
-function Embers({ count = 180 }) {
+// ─── Embers — short-lived irregular sparks that ignite + extinguish ────
+// Each ember has a full lifecycle:
+//   age 0.00 → 0.10  fade in, hottest (orange-yellow)
+//   age 0.10 → 0.55  bright red, steady drift
+//   age 0.55 → 1.00  cools and dims, fades to nothing
+//   age >= lifetime  respawns at a new random position with new motion
+//
+// Non-uniform per-particle scale + low-poly sphere + bloom yields an
+// irregular pebble-of-glow look. Additive blending means "opacity" is
+// faked by multiplying the RGB color by the lifecycle envelope —
+// when envelope hits 0, the ember contributes zero light and is gone.
+function Embers({ count = 200 }) {
   const meshRef = useRef()
   const dummy = useMemo(() => new THREE.Object3D(), [])
   const colorBuffer = useMemo(() => new Float32Array(count * 3), [count])
 
-  // Bounding box embers live in
-  const BOX = { x: 36, y: 26, z: 30 }
+  const BOX = { x: 38, y: 28, z: 32 }
 
-  const seeds = useMemo(() => (
-    Array.from({ length: count }, () => {
-      // Random unit-ish direction, biased slightly upward (real embers
-      // do rise on average), but plenty of horizontal/down motion too.
-      const dirX = (Math.random() - 0.5) * 2
-      const dirY = Math.random() * 1.6 - 0.4   // mostly up, some down
-      const dirZ = (Math.random() - 0.5) * 2
-      const mag = Math.hypot(dirX, dirY, dirZ) || 1
-      const speed = 0.25 + Math.random() * 0.85
-      return {
-        x: (Math.random() - 0.5) * BOX.x * 2,
-        y: (Math.random() - 0.5) * BOX.y * 2,
-        z: (Math.random() - 0.5) * BOX.z * 2 - 2,
-        vx: (dirX / mag) * speed,
-        vy: (dirY / mag) * speed,
-        vz: (dirZ / mag) * speed,
-        size: 0.04 + Math.random() * 0.10,
-        flickerSeed: Math.random() * Math.PI * 2,
-        hueShift: (Math.random() - 0.5) * 0.03,  // tight red jitter only
-      }
-    })
-  ), [count])
+  // Random respawn — called both at init and whenever an ember dies
+  const respawn = (s) => {
+    const dirX = (Math.random() - 0.5) * 2
+    const dirY = Math.random() * 1.6 - 0.4   // weakly biased upward
+    const dirZ = (Math.random() - 0.5) * 2
+    const mag = Math.hypot(dirX, dirY, dirZ) || 1
+    const speed = 0.15 + Math.random() * 0.55
+    s.x  = (Math.random() - 0.5) * BOX.x * 2
+    s.y  = (Math.random() - 0.5) * BOX.y * 2
+    s.z  = (Math.random() - 0.5) * BOX.z * 2 - 2
+    s.vx = (dirX / mag) * speed
+    s.vy = (dirY / mag) * speed
+    s.vz = (dirZ / mag) * speed
+    s.size       = 0.05 + Math.random() * 0.11
+    s.aspectX    = 0.7 + Math.random() * 0.6   // irregular shape
+    s.aspectY    = 0.9 + Math.random() * 0.9
+    s.aspectZ    = 0.7 + Math.random() * 0.6
+    s.age        = 0
+    s.lifetime   = 4 + Math.random() * 6        // seconds
+    s.flickerSeed = Math.random() * Math.PI * 2
+    s.hueShift   = (Math.random() - 0.5) * 0.025
+    return s
+  }
+
+  const seeds = useMemo(() => {
+    const arr = Array.from({ length: count }, () => respawn({}))
+    // Stagger initial ages so embers don't all ignite + die in unison
+    arr.forEach(s => { s.age = Math.random() * s.lifetime })
+    return arr
+  }, [count])
 
   useFrame(({ clock }, delta) => {
     if (!meshRef.current) return
     const t = clock.elapsedTime
-    const dt = Math.min(delta, 0.05)   // clamp on tab-blur etc.
+    const dt = Math.min(delta, 0.05)
     const tmpColor = new THREE.Color()
 
-    seeds.forEach((s, i) => {
-      // Update position; wrap-around at box bounds
+    for (let i = 0; i < seeds.length; i++) {
+      const s = seeds[i]
+      s.age += dt
+      if (s.age >= s.lifetime) respawn(s)
+
+      // Motion
       s.x += s.vx * dt
       s.y += s.vy * dt
       s.z += s.vz * dt
@@ -100,22 +117,52 @@ function Embers({ count = 180 }) {
       if (s.z >  BOX.z) s.z = -BOX.z
       if (s.z < -BOX.z) s.z =  BOX.z
 
-      const flicker = 0.75 + 0.25 * Math.sin(t * 6 + s.flickerSeed)
-                          + 0.10 * Math.sin(t * 14.3 + s.flickerSeed * 1.7)
+      const life = s.age / s.lifetime   // 0 → 1
+
+      // Lifecycle envelope: smooth rise 0→0.1, plateau 0.1→0.55,
+      // ease-out 0.55→1.0
+      let env
+      if (life < 0.10)      env = life / 0.10
+      else if (life < 0.55) env = 1.0
+      else                  env = 1.0 - (life - 0.55) / 0.45
+      env = Math.max(0, Math.min(1, env))
+      // Soften the curve so transitions don't pop
+      env = env * env * (3 - 2 * env)
+
+      // Per-frame flicker so even mid-life embers shimmer
+      const flicker = 0.78 + 0.22 * Math.sin(t * 6 + s.flickerSeed)
+                          + 0.08 * Math.sin(t * 14.3 + s.flickerSeed * 1.7)
 
       dummy.position.set(s.x, s.y, s.z)
-      dummy.scale.setScalar(s.size * flicker)
+      // Size grows slightly past birth then settles — ember "ignites"
+      const sizeEnv = life < 0.1 ? (0.6 + 0.4 * (life / 0.1)) : 1.0
+      const baseScale = s.size * flicker * sizeEnv
+      dummy.scale.set(baseScale * s.aspectX, baseScale * s.aspectY, baseScale * s.aspectZ)
       dummy.updateMatrix()
       meshRef.current.setMatrixAt(i, dummy.matrix)
 
-      // Pure red with small per-particle hue jitter — visually distinct
-      // from the amber-gold stars. Lightness shimmers with the flicker.
-      const hue   = 0.005 + s.hueShift  // ~ red (just shy of pure)
-      const sat   = 0.95
-      const light = 0.38 + 0.20 * flicker
-      tmpColor.setHSL(hue, sat, light)
+      // Color sweeps from hot orange at birth → red middle → cool red at death
+      // hue: 0.07 (orange) at life=0 → 0.005 (red) at life=0.4+
+      const hueBase = life < 0.4
+        ? 0.07 - (life / 0.4) * 0.065
+        : 0.005
+      const hue = hueBase + s.hueShift
+      // Saturation tapers slightly at the very end so it looks like ash
+      const sat = 0.95 * (1 - 0.3 * Math.max(0, life - 0.8) * 5)
+      // Lightness: hot at birth, steady mid, dimmer at death; flicker on top
+      const lightBase = life < 0.1
+        ? 0.55 + 0.15 * (life / 0.1)
+        : life < 0.55
+          ? 0.50
+          : 0.50 - (life - 0.55) / 0.45 * 0.30
+      const light = lightBase * (0.85 + 0.15 * flicker)
+
+      tmpColor.setHSL(hue, Math.max(0, sat), Math.max(0, light))
+      // Multiply by envelope — additive blending lets us "fade out" only
+      // by dimming the color contribution to zero
+      tmpColor.multiplyScalar(env)
       tmpColor.toArray(colorBuffer, i * 3)
-    })
+    }
 
     meshRef.current.instanceMatrix.needsUpdate = true
     if (meshRef.current.geometry.attributes.color) {
@@ -125,13 +172,14 @@ function Embers({ count = 180 }) {
 
   return (
     <instancedMesh ref={meshRef} args={[null, null, count]}>
-      <sphereGeometry args={[1, 8, 8]}>
+      {/* Low-poly sphere — bloom + non-uniform scale do the rest */}
+      <sphereGeometry args={[1, 6, 6]}>
         <instancedBufferAttribute attach="attributes-color" args={[colorBuffer, 3]} />
       </sphereGeometry>
       <meshBasicMaterial
         vertexColors
         transparent
-        opacity={0.85}
+        opacity={0.9}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
       />
