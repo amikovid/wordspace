@@ -1,9 +1,12 @@
 import 'dotenv/config'
-import pg from 'pg'
+import { Pool, neonConfig } from '@neondatabase/serverless'
+import ws from 'ws'
 import { PCA } from 'ml-pca'
 import fs from 'node:fs'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+
+neonConfig.webSocketConstructor = ws
 
 // ─────────────────────────────────────────────────────────────────────────
 // Snapshot Wordspace DB → src/data/excerpts-processed.json
@@ -17,7 +20,6 @@ import { fileURLToPath } from 'node:url'
 // pipeline) to refresh what the 3D visualization shows.
 // ─────────────────────────────────────────────────────────────────────────
 
-const { Pool } = pg
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
 
@@ -90,10 +92,7 @@ async function main() {
     process.exit(1)
   }
 
-  const pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-  })
+  const pool = new Pool({ connectionString: process.env.DATABASE_URL })
 
   console.log('📥 Reading excerpts from Neon...')
   const { rows } = await pool.query(`

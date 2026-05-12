@@ -1,6 +1,9 @@
-import pg from 'pg'
+// Neon over WebSockets (port 443). Bypasses any firewall that blocks
+// raw Postgres on 5432 — which most home / corporate / café networks do.
+import { Pool, neonConfig } from '@neondatabase/serverless'
+import ws from 'ws'
 
-const { Pool } = pg
+neonConfig.webSocketConstructor = ws
 
 let pool
 
@@ -8,14 +11,9 @@ export function getPool() {
   if (!pool) {
     const conn = process.env.DATABASE_URL
     if (!conn) {
-      throw new Error('DATABASE_URL is not set. Configure it in the project .env or in the MCP client env block.')
+      throw new Error('DATABASE_URL is not set. Configure it in .env or in the Claude Desktop MCP env block.')
     }
-    pool = new Pool({
-      connectionString: conn,
-      ssl: { rejectUnauthorized: false },
-      max: 3,
-      idleTimeoutMillis: 10_000,
-    })
+    pool = new Pool({ connectionString: conn })
   }
   return pool
 }
@@ -24,7 +22,6 @@ export async function query(text, params) {
   return getPool().query(text, params)
 }
 
-// One-row helper; throws if more than one row comes back
 export async function queryOne(text, params) {
   const { rows } = await query(text, params)
   if (rows.length > 1) throw new Error(`queryOne returned ${rows.length} rows`)
