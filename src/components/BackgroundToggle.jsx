@@ -1,10 +1,11 @@
 import { motion } from 'framer-motion'
 
 const MODES = [
-  { id: 'off',    label: 'Bare',  description: 'Just the constellation' },
-  { id: 'motes',  label: 'Motes', description: 'Dust drifting in firelight' },
-  { id: 'embers', label: 'Embers',description: 'Rising sparks' },
-  { id: 'stars',  label: 'Stars', description: 'Distant warm starfield' },
+  { id: 'off',     label: 'Bare',    description: 'Just the constellation' },
+  { id: 'motes',   label: 'Motes',   description: 'Dust drifting in firelight' },
+  { id: 'embers',  label: 'Embers',  description: 'Rising flame wisps' },
+  { id: 'spines',  label: 'Spines',  description: 'A distant library wall' },
+  { id: 'stars',   label: 'Stars',   description: 'Distant warm starfield' },
 ]
 
 export default function BackgroundToggle({ mode, onChange }) {

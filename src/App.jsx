@@ -16,7 +16,7 @@ function App() {
   const [isEntering, setIsEntering] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
   const [layoutMode, setLayoutMode] = useState('semantic')    // semantic | book | timeline
-  const [backgroundMode, setBackgroundMode] = useState('motes')  // off | motes | embers | stars
+  const [backgroundMode, setBackgroundMode] = useState('embers') // off | motes | embers | spines | stars
 
   const handleEnter = () => {
     setIsEntering(true)
