@@ -30,12 +30,17 @@ export default function DetailPanel({ excerpt, excerpts, onClose, onRelatedClick
         animate={{ opacity: 1, y: 0 }}
         exit={{ opacity: 0, y: 100 }}
         transition={{ duration: 0.45, ease: [0.4, 0, 0.2, 1] }}
+        // Stop wheel/touch/pointer events from bubbling up to TrackballControls
+        // — otherwise scrolling inside the panel zooms the 3D scene instead.
+        onWheel={(e) => e.stopPropagation()}
+        onTouchMove={(e) => e.stopPropagation()}
+        onPointerDown={(e) => e.stopPropagation()}
         className="fixed bottom-0 left-0 right-0
                    md:top-1/2 md:right-8 md:left-auto md:bottom-auto md:-translate-y-1/2
                    w-full md:w-[420px]
                    max-h-[68vh] md:max-h-[82vh]
                    glass-parchment rounded-t-3xl md:rounded-3xl p-7 md:p-9
-                   overflow-y-auto hide-scrollbar z-50"
+                   overflow-y-auto overscroll-contain hide-scrollbar z-50"
       >
         <button
           onClick={onClose}
