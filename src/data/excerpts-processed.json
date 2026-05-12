@@ -1,0 +1,57 @@
+[
+  {
+    "id": 1,
+    "text": "How we spend our days is, of course, how we spend our lives.",
+    "source": { "title": "The Writing Life", "author": "Annie Dillard", "page": 32 },
+    "my_thought": "A reminder that there is no someday. Days are the unit of a life.",
+    "claude_reflection": null,
+    "themes": ["attention", "time"],
+    "date_added": "2026-05-12",
+    "position": { "x": -4.2, "y": 2.1, "z": 0.4 },
+    "related": [2, 5, 4]
+  },
+  {
+    "id": 2,
+    "text": "Confine yourself to the present.",
+    "source": { "title": "Meditations", "author": "Marcus Aurelius", "page": null },
+    "my_thought": "Most of my suffering is timeshare in tomorrow.",
+    "claude_reflection": null,
+    "themes": ["presence", "stoicism"],
+    "date_added": "2026-05-12",
+    "position": { "x": -1.8, "y": 3.6, "z": -2.1 },
+    "related": [1, 5, 4]
+  },
+  {
+    "id": 3,
+    "text": "I have always imagined that Paradise will be a kind of library.",
+    "source": { "title": "Poem of the Gifts", "author": "Jorge Luis Borges", "page": null },
+    "my_thought": "Heaven as a room of books. The reading is the afterlife.",
+    "claude_reflection": null,
+    "themes": ["reading", "imagination"],
+    "date_added": "2026-05-12",
+    "position": { "x": 4.5, "y": 1.2, "z": 1.8 },
+    "related": [1, 5, 2]
+  },
+  {
+    "id": 4,
+    "text": "No man ever steps in the same river twice, for it's not the same river and he's not the same man.",
+    "source": { "title": "Fragments", "author": "Heraclitus", "page": null },
+    "my_thought": "Identity as flow, not substance. The river and the man, co-evolving.",
+    "claude_reflection": null,
+    "themes": ["change", "identity"],
+    "date_added": "2026-05-12",
+    "position": { "x": -2.6, "y": -2.8, "z": 2.3 },
+    "related": [1, 2, 5]
+  },
+  {
+    "id": 5,
+    "text": "Every day is a journey, and the journey itself is home.",
+    "source": { "title": "Narrow Road to the Deep North", "author": "Matsuo Bashō", "page": null },
+    "my_thought": "Home isn't where you settle. It's the moving.",
+    "claude_reflection": null,
+    "themes": ["journey", "presence"],
+    "date_added": "2026-05-12",
+    "position": { "x": 3.1, "y": -1.4, "z": -1.6 },
+    "related": [2, 1, 4]
+  }
+]

@@ -1,0 +1,87 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --umber-950: #0d0805;
+  --umber-900: #1a0f08;
+  --umber-800: #241710;
+  --ember-300: #f0c465;
+  --ember-400: #e8a942;
+  --copper-500: #c9a14a;
+  --parchment-50: #faf3e5;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--umber-900);
+  color: var(--parchment-50);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow: hidden;
+}
+
+#root {
+  width: 100vw;
+  height: 100vh;
+}
+
+/* Glass panel — warm, sepia-tinted, like sunlight through aged paper */
+.glass {
+  background: rgba(26, 15, 8, 0.72);
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  border: 1px solid rgba(201, 161, 74, 0.18);
+  box-shadow:
+    0 8px 40px rgba(0, 0, 0, 0.55),
+    inset 0 1px 0 rgba(240, 196, 101, 0.08);
+}
+
+/* Cream/parchment-tinted glass — used for excerpt detail panels */
+.glass-parchment {
+  background: rgba(250, 243, 229, 0.04);
+  backdrop-filter: blur(20px) saturate(150%);
+  -webkit-backdrop-filter: blur(20px) saturate(150%);
+  border: 1px solid rgba(232, 169, 66, 0.20);
+  box-shadow:
+    0 12px 60px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(240, 196, 101, 0.10);
+}
+
+/* Smooth transitions */
+.transition-smooth {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hide scrollbar */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Serif treatment for excerpt bodies */
+.excerpt-body {
+  font-family: 'EB Garamond', Cormorant Garamond, Georgia, serif;
+  font-weight: 400;
+  font-feature-settings: 'liga' 1, 'kern' 1, 'onum' 1;
+  letter-spacing: 0.005em;
+  line-height: 1.55;
+  color: var(--parchment-50);
+}
+
+/* Faint warm vignette at edges of the canvas */
+.canvas-vignette::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse at center,
+    transparent 50%,
+    rgba(13, 8, 5, 0.55) 100%
+  );
+  z-index: 1;
+}
