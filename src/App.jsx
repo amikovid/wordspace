@@ -6,6 +6,7 @@ import LoadingScreen from './components/LoadingScreen'
 import LandingScreen from './components/LandingScreen'
 import SearchBar from './components/SearchBar'
 import Controls from './components/Controls'
+import LayoutSwitcher from './components/LayoutSwitcher'
 import FireGlow from './components/FireGlow'
 import seedExcerpts from './data/excerpts-processed.json'
 
@@ -105,9 +106,8 @@ function App() {
           />
 
           <SearchBar onSearch={setSearchQuery} />
+          <LayoutSwitcher mode={layoutMode} onChange={setLayoutMode} />
           <Controls
-            layoutMode={layoutMode}
-            onLayoutChange={setLayoutMode}
             backgroundMode={backgroundMode}
             onBackgroundChange={setBackgroundMode}
           />
