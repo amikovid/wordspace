@@ -5,8 +5,7 @@ import AudioController from './components/AudioController'
 import LoadingScreen from './components/LoadingScreen'
 import LandingScreen from './components/LandingScreen'
 import SearchBar from './components/SearchBar'
-import ModeSwitcher from './components/ModeSwitcher'
-import BackgroundToggle from './components/BackgroundToggle'
+import Controls from './components/Controls'
 import FireGlow from './components/FireGlow'
 import excerptsData from './data/excerpts-processed.json'
 
@@ -16,8 +15,8 @@ function App() {
   const [showLanding, setShowLanding] = useState(true)
   const [isEntering, setIsEntering] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
-  const [layoutMode, setLayoutMode] = useState('semantic')    // semantic | book | timeline
-  const [backgroundMode, setBackgroundMode] = useState('embers') // off | motes | embers | spines | stars
+  const [layoutMode, setLayoutMode] = useState('semantic')
+  const [backgroundMode, setBackgroundMode] = useState('embers')
 
   const handleEnter = () => {
     setIsEntering(true)
@@ -73,8 +72,12 @@ function App() {
           />
 
           <SearchBar onSearch={setSearchQuery} />
-          <ModeSwitcher mode={layoutMode} onChange={setLayoutMode} />
-          <BackgroundToggle mode={backgroundMode} onChange={setBackgroundMode} />
+          <Controls
+            layoutMode={layoutMode}
+            onLayoutChange={setLayoutMode}
+            backgroundMode={backgroundMode}
+            onBackgroundChange={setBackgroundMode}
+          />
         </>
       )}
     </div>
