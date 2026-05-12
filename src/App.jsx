@@ -5,14 +5,18 @@ import AudioController from './components/AudioController'
 import LoadingScreen from './components/LoadingScreen'
 import LandingScreen from './components/LandingScreen'
 import SearchBar from './components/SearchBar'
+import ModeSwitcher from './components/ModeSwitcher'
+import BackgroundToggle from './components/BackgroundToggle'
 import excerptsData from './data/excerpts-processed.json'
 
 function App() {
   const [selectedExcerpt, setSelectedExcerpt] = useState(null)
-  const [audioEnabled, setAudioEnabled] = useState(false) // off by default
+  const [audioEnabled, setAudioEnabled] = useState(false)
   const [showLanding, setShowLanding] = useState(true)
   const [isEntering, setIsEntering] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+  const [layoutMode, setLayoutMode] = useState('semantic')    // semantic | book | timeline
+  const [backgroundMode, setBackgroundMode] = useState('motes')  // off | motes | embers | stars
 
   const handleEnter = () => {
     setIsEntering(true)
@@ -40,6 +44,8 @@ function App() {
             onStarClick={handleStarClick}
             isEntering={isEntering}
             searchQuery={searchQuery}
+            layoutMode={layoutMode}
+            backgroundMode={backgroundMode}
           />
         </Suspense>
       </div>
@@ -64,6 +70,8 @@ function App() {
           />
 
           <SearchBar onSearch={setSearchQuery} />
+          <ModeSwitcher mode={layoutMode} onChange={setLayoutMode} />
+          <BackgroundToggle mode={backgroundMode} onChange={setBackgroundMode} />
         </>
       )}
     </div>

@@ -1,11 +1,12 @@
 import { useRef } from 'react'
 import { Canvas, useFrame, useThree } from '@react-three/fiber'
-import { TrackballControls, Stars } from '@react-three/drei'
+import { TrackballControls } from '@react-three/drei'
 import { EffectComposer, Bloom } from '@react-three/postprocessing'
 import * as THREE from 'three'
 import StarField from './StarField'
+import Atmosphere from './Atmosphere'
 
-function ConstellationGroup({ excerpts, selectedExcerpt, onStarClick, isEntering, searchQuery }) {
+function ConstellationGroup({ excerpts, selectedExcerpt, onStarClick, isEntering, searchQuery, layoutMode }) {
   const groupRef = useRef()
   const spinStart = useRef(null)
   const { camera } = useThree()
@@ -37,29 +38,22 @@ function ConstellationGroup({ excerpts, selectedExcerpt, onStarClick, isEntering
         selectedExcerpt={selectedExcerpt}
         onStarClick={onStarClick}
         searchQuery={searchQuery}
+        layoutMode={layoutMode}
       />
     </group>
   )
 }
 
-export default function Scene({ excerpts, selectedExcerpt, onStarClick, isEntering, searchQuery }) {
+export default function Scene({ excerpts, selectedExcerpt, onStarClick, isEntering, searchQuery, layoutMode, backgroundMode }) {
   return (
     <Canvas
       camera={{ position: [0, 0, 30], fov: 60 }}
-      style={{ background: '#1a0f08' }}  /* umber-900 — candlelit study */
+      style={{ background: '#1a0f08' }}
     >
-      {/* Distant warm-tinted starfield as backdrop. Low saturation, low density. */}
-      <Stars
-        radius={100}
-        depth={50}
-        count={2400}
-        factor={3}
-        saturation={0.25}
-        fade
-        speed={0.6}
-      />
+      {/* Swappable atmosphere layer — off / motes / embers / stars */}
+      <Atmosphere mode={backgroundMode} />
 
-      {/* Warm ambient + a directional fill that reads as firelight from below-left */}
+      {/* Warm lighting — firelight from below-left, candle from above-right */}
       <ambientLight intensity={0.45} color="#3a2614" />
       <pointLight position={[10, 10, 10]} intensity={0.9} color="#f0c465" />
       <pointLight position={[-12, -8, 6]} intensity={0.4} color="#e8a942" />
@@ -70,6 +64,7 @@ export default function Scene({ excerpts, selectedExcerpt, onStarClick, isEnteri
         onStarClick={onStarClick}
         isEntering={isEntering}
         searchQuery={searchQuery}
+        layoutMode={layoutMode}
       />
 
       <TrackballControls
@@ -90,7 +85,6 @@ export default function Scene({ excerpts, selectedExcerpt, onStarClick, isEnteri
       />
 
       <EffectComposer>
-        {/* Bloom tuned warmer/softer — firelight, not starburst */}
         <Bloom
           luminanceThreshold={0.28}
           luminanceSmoothing={0.85}
