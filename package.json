@@ -8,7 +8,9 @@
     "build": "vite build",
     "preview": "vite preview",
     "generate-embeddings": "node scripts/generateEmbeddings.js",
-    "db:migrate": "node scripts/migrate.js"
+    "snapshot": "node scripts/snapshot.js",
+    "schema:apply": "node scripts/apply-schema.js",
+    "mcp": "node mcp/index.js"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.40.0",

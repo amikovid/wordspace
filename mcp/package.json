@@ -1,0 +1,19 @@
+{
+  "name": "wordspace-mcp",
+  "version": "0.0.1",
+  "description": "MCP server exposing the Wordspace DB as tools for Claude chat",
+  "type": "module",
+  "bin": {
+    "wordspace-mcp": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node --watch index.js"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
+    "dotenv": "^16.3.1",
+    "openai": "^4.20.0",
+    "pg": "^8.13.1"
+  }
+}
