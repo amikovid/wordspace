@@ -1,4 +1,4 @@
-import { useRef, useMemo } from 'react'
+import { useRef, useMemo, useEffect } from 'react'
 import { useFrame } from '@react-three/fiber'
 import { Stars } from '@react-three/drei'
 import * as THREE from 'three'
@@ -46,62 +46,73 @@ function DustMotes({ count = 320 }) {
   )
 }
 
-// ─── Rising embers — fiery flame wisps, not spheres ────────────────────
-// Cone geometry pointed upward, additive-blended, vibrant orange-red.
-// Vertically elongated, flickering size + opacity. Clearly distinct from
-// the round metallic amber stars.
-function Embers({ count = 110 }) {
+// ─── Embers — small, omnidirectional sparks ────────────────────────────
+// Tiny additive-blended spheres (no implied direction). Each has its
+// own velocity vector — some rise, some sink, some drift sideways.
+// They wrap around the box so the volume stays full. Vivid orange-red
+// color with per-particle hue variation, additive over the umber bg.
+function Embers({ count = 180 }) {
   const meshRef = useRef()
   const dummy = useMemo(() => new THREE.Object3D(), [])
   const colorBuffer = useMemo(() => new Float32Array(count * 3), [count])
 
+  // Bounding box embers live in
+  const BOX = { x: 36, y: 26, z: 30 }
+
   const seeds = useMemo(() => (
-    Array.from({ length: count }, () => ({
-      x: (Math.random() - 0.5) * 50,
-      yOffset: Math.random() * 40,
-      z: (Math.random() - 0.5) * 26 - 4,
-      // Flame shape: tall, narrow
-      width: 0.12 + Math.random() * 0.18,
-      height: 0.5 + Math.random() * 1.2,
-      speed: 0.5 + Math.random() * 0.7,
-      phase: Math.random() * Math.PI * 2,
-      swayAmp: 0.5 + Math.random() * 1.1,
-      flickerSeed: Math.random() * Math.PI * 2,
-    }))
+    Array.from({ length: count }, () => {
+      // Random unit-ish direction, biased slightly upward (real embers
+      // do rise on average), but plenty of horizontal/down motion too.
+      const dirX = (Math.random() - 0.5) * 2
+      const dirY = Math.random() * 1.6 - 0.4   // mostly up, some down
+      const dirZ = (Math.random() - 0.5) * 2
+      const mag = Math.hypot(dirX, dirY, dirZ) || 1
+      const speed = 0.25 + Math.random() * 0.85
+      return {
+        x: (Math.random() - 0.5) * BOX.x * 2,
+        y: (Math.random() - 0.5) * BOX.y * 2,
+        z: (Math.random() - 0.5) * BOX.z * 2 - 2,
+        vx: (dirX / mag) * speed,
+        vy: (dirY / mag) * speed,
+        vz: (dirZ / mag) * speed,
+        size: 0.04 + Math.random() * 0.10,
+        flickerSeed: Math.random() * Math.PI * 2,
+        hueShift: (Math.random() - 0.5) * 0.06,  // per-particle color tint
+      }
+    })
   ), [count])
 
-  useFrame(({ clock }) => {
+  useFrame(({ clock }, delta) => {
     if (!meshRef.current) return
     const t = clock.elapsedTime
+    const dt = Math.min(delta, 0.05)   // clamp on tab-blur etc.
     const tmpColor = new THREE.Color()
 
     seeds.forEach((s, i) => {
-      const yRaw = (s.yOffset + t * s.speed) % 42
-      const y = yRaw - 18
-      const lifeT = yRaw / 42  // 0 (bottom, hottest) → 1 (top, fading red)
-      const sway = Math.sin(t * 0.7 + s.phase) * s.swayAmp * (0.4 + lifeT * 0.6)
+      // Update position; wrap-around at box bounds
+      s.x += s.vx * dt
+      s.y += s.vy * dt
+      s.z += s.vz * dt
+      if (s.x >  BOX.x) s.x = -BOX.x
+      if (s.x < -BOX.x) s.x =  BOX.x
+      if (s.y >  BOX.y) s.y = -BOX.y
+      if (s.y < -BOX.y) s.y =  BOX.y
+      if (s.z >  BOX.z) s.z = -BOX.z
+      if (s.z < -BOX.z) s.z =  BOX.z
 
-      // Per-ember flicker — affects size, makes them feel alive
-      const flicker = 0.78 + 0.22 * Math.sin(t * 5.5 + s.flickerSeed)
-                          + 0.08 * Math.sin(t * 13.7 + s.flickerSeed * 1.4)
+      const flicker = 0.75 + 0.25 * Math.sin(t * 6 + s.flickerSeed)
+                          + 0.10 * Math.sin(t * 14.3 + s.flickerSeed * 1.7)
 
-      dummy.position.set(s.x + sway, y, s.z)
-
-      // Lifetime-driven taper — embers grow narrower + dimmer as they rise
-      const lifeScale = 1 - lifeT * 0.55
-      dummy.scale.set(
-        s.width  * flicker * lifeScale,
-        s.height * flicker * (0.85 + (1 - lifeT) * 0.3),
-        s.width  * flicker * lifeScale
-      )
+      dummy.position.set(s.x, s.y, s.z)
+      dummy.scale.setScalar(s.size * flicker)
       dummy.updateMatrix()
       meshRef.current.setMatrixAt(i, dummy.matrix)
 
-      // Color: hot yellow-orange at birth → orange → ember red → black
-      // Hue 0.13 (yellow) → 0.05 (orange) → 0.02 (red)
-      const hue   = 0.13 - lifeT * 0.11
-      const sat   = 0.95 - lifeT * 0.15
-      const light = 0.62 * (1 - lifeT * 0.78)
+      // Hot orange-red with per-particle hue jitter. Slight time-based
+      // shimmer in lightness so the field "breathes" overall.
+      const hue   = 0.04 + s.hueShift  // ~ orange-red
+      const sat   = 0.92
+      const light = 0.42 + 0.18 * flicker
       tmpColor.setHSL(hue, sat, light)
       tmpColor.toArray(colorBuffer, i * 3)
     })
@@ -114,135 +125,117 @@ function Embers({ count = 110 }) {
 
   return (
     <instancedMesh ref={meshRef} args={[null, null, count]}>
-      {/* Cone pointing up = flame tip. Few segments — soft enough for bloom. */}
-      <coneGeometry args={[1, 1, 8, 1, true]}>
+      <sphereGeometry args={[1, 8, 8]}>
         <instancedBufferAttribute attach="attributes-color" args={[colorBuffer, 3]} />
-      </coneGeometry>
+      </sphereGeometry>
       <meshBasicMaterial
         vertexColors
         transparent
-        opacity={0.88}
+        opacity={0.85}
         depthWrite={false}
         blending={THREE.AdditiveBlending}
-        side={THREE.DoubleSide}
       />
     </instancedMesh>
   )
 }
 
-// ─── Distant book spines — a library wall in deep background ────────────
-// Many thin vertical rectangles arranged in horizontal shelf rows, far
-// behind everything else. Warm muted leather/cloth tones. Deterministic
-// per session so the wall feels permanent (no flicker between renders).
-function BookSpines({ shelfCount = 5, spinesPerShelf = 60 }) {
+// ─── Distant book spines — three parallax layers ───────────────────────
+// Three z-layers of warm-toned spine rectangles, each deeper layer
+// further back + dimmer + slightly less dense. Reds/burgundies/oxblood
+// dominate; honey + walnut for variety. The wall feels permanent
+// (deterministic PRNG) but multi-planar (parallax depth).
+function SpineLayer({ z, shelfCount, spinesPerShelf, opacity, brightness, seed }) {
   const meshRef = useRef()
   const total = shelfCount * spinesPerShelf
 
-  // Deterministic-feeling PRNG so the same wall renders each mount
+  // Per-layer seeded PRNG so each layer is stable
   const rng = useMemo(() => {
-    let s = 1337
+    let s = seed
     return () => {
       s = (s * 9301 + 49297) % 233280
       return s / 233280
     }
-  }, [])
+  }, [seed])
 
   const colorBuffer = useMemo(() => {
     const buf = new Float32Array(total * 3)
+    // Red-leather forward palette: oxblood, burgundy, wine, rust,
+    // plus a few walnut + honey accents for variety
     const palette = [
-      [0.22, 0.13, 0.08],   // dark walnut
-      [0.32, 0.18, 0.10],   // chestnut
-      [0.40, 0.22, 0.12],   // tan leather
-      [0.28, 0.10, 0.08],   // oxblood
-      [0.18, 0.14, 0.10],   // forest brown
-      [0.45, 0.32, 0.18],   // honey
-      [0.16, 0.18, 0.14],   // dark olive
-      [0.55, 0.42, 0.25],   // cream-tan
+      [0.42, 0.10, 0.10],   // oxblood
+      [0.50, 0.12, 0.14],   // wine
+      [0.38, 0.08, 0.08],   // dark red leather
+      [0.55, 0.18, 0.12],   // rust
+      [0.46, 0.14, 0.13],   // claret
+      [0.30, 0.08, 0.08],   // dried blood
+      [0.60, 0.22, 0.14],   // brick
+      [0.32, 0.18, 0.10],   // walnut accent
+      [0.55, 0.40, 0.22],   // honey accent (rare)
+      [0.18, 0.14, 0.10],   // shadow brown
     ]
     for (let i = 0; i < total; i++) {
       const c = palette[Math.floor(rng() * palette.length)]
-      const j = 0.85 + rng() * 0.3   // brightness jitter
+      const j = (0.8 + rng() * 0.4) * brightness
       buf[i*3]   = c[0] * j
       buf[i*3+1] = c[1] * j
       buf[i*3+2] = c[2] * j
     }
     return buf
-  }, [total, rng])
+  }, [total, rng, brightness])
 
   const instances = useMemo(() => {
     const arr = []
     const shelfSpacing = 4.5
     const shelfYStart = -((shelfCount - 1) / 2) * shelfSpacing
-    const spread = 80      // total horizontal span
+    const spread = 95
     for (let r = 0; r < shelfCount; r++) {
-      // Random horizontal pack — spines vary in width
       let x = -spread / 2
       for (let i = 0; i < spinesPerShelf; i++) {
         const width = 0.35 + rng() * 0.55
-        const height = 2.8 + rng() * 1.3
-        const lean = (rng() - 0.5) * 0.08   // subtle tilt
-        arr.push({
-          x: x + width / 2,
-          y: shelfYStart + r * shelfSpacing,
-          z: -38 - rng() * 6,
-          width,
-          height,
-          lean,
-        })
-        x += width + rng() * 0.03   // tiny gap
+        const height = 2.6 + rng() * 1.4
+        const lean = (rng() - 0.5) * 0.08
+        arr.push({ x: x + width / 2, y: shelfYStart + r * shelfSpacing, width, height, lean })
+        x += width + rng() * 0.03
         if (arr.length >= total) break
       }
     }
     return arr
   }, [shelfCount, spinesPerShelf, total, rng])
 
-  useMemo(() => {
+  // Apply matrices once on mount — static backdrop, no per-frame update
+  useEffect(() => {
     if (!meshRef.current) return
     const dummy = new THREE.Object3D()
     instances.forEach((s, i) => {
-      dummy.position.set(s.x, s.y, s.z)
+      dummy.position.set(s.x, s.y, z)
       dummy.rotation.set(0, 0, s.lean)
       dummy.scale.set(s.width, s.height, 1)
       dummy.updateMatrix()
       meshRef.current.setMatrixAt(i, dummy.matrix)
     })
     meshRef.current.instanceMatrix.needsUpdate = true
-  }, [instances])
-
-  // Re-apply matrices after the mesh ref is set (the useMemo above runs
-  // before mount). One-shot on mount.
-  useFrame(({ clock }, _, ) => {
-    // no-op; keeps the component alive in the frame loop if we ever
-    // want subtle camera-parallax later. Currently static.
-  })
+  }, [instances, z])
 
   return (
-    <instancedMesh
-      ref={(node) => {
-        meshRef.current = node
-        if (!node) return
-        const dummy = new THREE.Object3D()
-        instances.forEach((s, i) => {
-          dummy.position.set(s.x, s.y, s.z)
-          dummy.rotation.set(0, 0, s.lean)
-          dummy.scale.set(s.width, s.height, 1)
-          dummy.updateMatrix()
-          node.setMatrixAt(i, dummy.matrix)
-        })
-        node.instanceMatrix.needsUpdate = true
-      }}
-      args={[null, null, total]}
-    >
+    <instancedMesh ref={meshRef} args={[null, null, total]}>
       <planeGeometry args={[1, 1]}>
         <instancedBufferAttribute attach="attributes-color" args={[colorBuffer, 3]} />
       </planeGeometry>
-      <meshBasicMaterial
-        vertexColors
-        transparent
-        opacity={0.42}
-        depthWrite={false}
-      />
+      <meshBasicMaterial vertexColors transparent opacity={opacity} depthWrite={false} />
     </instancedMesh>
+  )
+}
+
+function BookSpines() {
+  return (
+    <>
+      {/* Deepest layer — furthest, dimmest, faintest */}
+      <SpineLayer z={-58} shelfCount={6} spinesPerShelf={70} opacity={0.18} brightness={0.55} seed={101} />
+      {/* Mid layer — fills the depth */}
+      <SpineLayer z={-42} shelfCount={5} spinesPerShelf={62} opacity={0.32} brightness={0.85} seed={733} />
+      {/* Front layer — strongest, closer in */}
+      <SpineLayer z={-28} shelfCount={4} spinesPerShelf={48} opacity={0.48} brightness={1.0}  seed={1337} />
+    </>
   )
 }
 
