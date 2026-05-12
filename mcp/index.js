@@ -16,6 +16,7 @@ import {
 
 import createExcerpt    from './tools/create_excerpt.js'
 import updateExcerpt    from './tools/update_excerpt.js'
+import deleteExcerpt    from './tools/delete_excerpt.js'
 import getExcerpt       from './tools/get_excerpt.js'
 import searchTool       from './tools/search.js'
 import listRecent       from './tools/list_recent.js'
@@ -28,6 +29,7 @@ import recentReflections from './tools/recent_reflections.js'
 const TOOLS = [
   createExcerpt,
   updateExcerpt,
+  deleteExcerpt,
   getExcerpt,
   searchTool,
   listRecent,
