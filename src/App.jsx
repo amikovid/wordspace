@@ -7,6 +7,7 @@ import LandingScreen from './components/LandingScreen'
 import SearchBar from './components/SearchBar'
 import ModeSwitcher from './components/ModeSwitcher'
 import BackgroundToggle from './components/BackgroundToggle'
+import FireGlow from './components/FireGlow'
 import excerptsData from './data/excerpts-processed.json'
 
 function App() {
@@ -49,6 +50,8 @@ function App() {
           />
         </Suspense>
       </div>
+
+      {backgroundMode === 'embers' && !showLanding && <FireGlow />}
 
       {showLanding && <LandingScreen onEnter={handleEnter} />}
 
