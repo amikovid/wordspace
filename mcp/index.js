@@ -14,17 +14,25 @@ import {
   CallToolRequestSchema,
 } from '@modelcontextprotocol/sdk/types.js'
 
-import createExcerpt    from './tools/create_excerpt.js'
-import updateExcerpt    from './tools/update_excerpt.js'
-import deleteExcerpt    from './tools/delete_excerpt.js'
-import getExcerpt       from './tools/get_excerpt.js'
-import searchTool       from './tools/search.js'
-import listRecent       from './tools/list_recent.js'
-import addReflection    from './tools/add_reflection.js'
-import listThemes       from './tools/list_themes.js'
-import addQuestion      from './tools/add_question.js'
-import listQuestions    from './tools/list_questions.js'
-import recentReflections from './tools/recent_reflections.js'
+// ─── Capture / library ──────────────────────────────────────────────
+import createExcerpt      from './tools/create_excerpt.js'
+import updateExcerpt      from './tools/update_excerpt.js'
+import deleteExcerpt      from './tools/delete_excerpt.js'
+import getExcerpt         from './tools/get_excerpt.js'
+import searchTool         from './tools/search.js'
+import listRecent         from './tools/list_recent.js'
+import addReflection      from './tools/add_reflection.js'
+import listThemes         from './tools/list_themes.js'
+import addQuestion        from './tools/add_question.js'
+import listQuestions      from './tools/list_questions.js'
+import recentReflections  from './tools/recent_reflections.js'
+
+// ─── Practice layer ────────────────────────────────────────────────
+import getProfile         from './tools/get_profile.js'
+import updateProfile      from './tools/update_profile.js'
+import addPractice        from './tools/add_practice.js'
+import listPractices      from './tools/list_practices.js'
+import logPracticeOutcome from './tools/log_practice_outcome.js'
 
 const TOOLS = [
   createExcerpt,
@@ -38,12 +46,17 @@ const TOOLS = [
   addQuestion,
   listQuestions,
   recentReflections,
+  getProfile,
+  updateProfile,
+  addPractice,
+  listPractices,
+  logPracticeOutcome,
 ]
 
 const toolMap = new Map(TOOLS.map(t => [t.name, t]))
 
 const server = new Server(
-  { name: 'wordspace', version: '0.0.1' },
+  { name: 'wordspace', version: '0.1.0' },
   { capabilities: { tools: {} } },
 )
 
@@ -77,5 +90,4 @@ server.setRequestHandler(CallToolRequestSchema, async (req) => {
 const transport = new StdioServerTransport()
 await server.connect(transport)
 
-// Keep alive — stdio transport handles its own lifecycle.
 console.error(`[wordspace-mcp] running. ${TOOLS.length} tools registered.`)

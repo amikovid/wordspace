@@ -9,20 +9,33 @@ the shared state — which means a chat hitting its image limit can hand
 off to a new chat that just calls `wordspace_recent_reflections` and
 picks up.
 
-## Tools
+## Tools (16 total)
+
+**Capture / library**
 
 | Tool | What it does |
 |---|---|
-| `wordspace_create_excerpt`   | Add a new excerpt. Embeds it, finds neighbors, attaches themes. Returns id + nearest neighbors. |
-| `wordspace_update_excerpt`   | Patch fields on an existing excerpt. (Does not auto-re-embed.) |
-| `wordspace_get_excerpt`      | Fetch one excerpt by id with its themes and 3 nearest neighbors. |
-| `wordspace_search`           | Semantic search; top-k by pgvector cosine. |
-| `wordspace_list_recent`      | Newest-first excerpts. Useful at the start of a fresh chat. |
-| `wordspace_add_reflection`   | Store a reflection — either inline on an excerpt or standalone (digest / tension / deepening / pattern / answer / note). |
-| `wordspace_list_themes`      | All themes, with attachment counts. |
-| `wordspace_add_question`     | File an open question. |
-| `wordspace_list_questions`   | Open questions (filterable by status). |
-| `wordspace_recent_reflections` | Recent reflections, optionally filtered by kind. |
+| `wordspace_create_excerpt`     | Add a new excerpt. Embeds, finds neighbors, attaches themes. |
+| `wordspace_update_excerpt`     | Patch fields (text / book / author / themes / etc). Re-embeds if text or my_thought changed. |
+| `wordspace_delete_excerpt`     | Permanently delete; cascades theme links + scrubs dangling refs. |
+| `wordspace_get_excerpt`        | Full record + themes + neighbors. |
+| `wordspace_search`             | Semantic search via pgvector cosine. |
+| `wordspace_list_recent`        | Newest-first excerpts. |
+| `wordspace_add_reflection`     | Inline on excerpt OR standalone reflection. |
+| `wordspace_list_themes`        | All themes with attachment counts. |
+| `wordspace_add_question`       | File an open question. |
+| `wordspace_list_questions`     | Filter by status. |
+| `wordspace_recent_reflections` | Recent reflections (optionally by kind). |
+
+**Practice layer**
+
+| Tool | What it does |
+|---|---|
+| `wordspace_get_profile`           | Read the user's profile (about / current_focus / constraints / facts). |
+| `wordspace_update_profile`        | Patch text fields and/or replace facts array. Always show user before mutating. |
+| `wordspace_add_practice`          | Propose a practice — must satisfy moment/action/stop-condition/<15min constraints. |
+| `wordspace_list_practices`        | Active set by default (proposed / accepted / tried). |
+| `wordspace_log_practice_outcome`  | Close the loop. Status: accepted / declined / tried / completed + optional outcome text. |
 
 ## Setup
 

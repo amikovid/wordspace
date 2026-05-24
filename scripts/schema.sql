@@ -84,6 +84,40 @@ create index if not exists excerpts_date_added_idx on excerpts (date_added desc)
 create index if not exists reflections_created_at_idx on reflections (created_at desc);
 create index if not exists reflections_kind_idx on reflections (kind);
 
+-- ─── Practice layer: profile + practices ──────────────────────────────
+
+create table if not exists profile (
+  id            int primary key default 1,
+  about         text,
+  current_focus text,
+  constraints   text,
+  facts         jsonb not null default '[]'::jsonb,
+  updated_at    timestamptz not null default now(),
+  check (id = 1)
+);
+
+insert into profile (id) values (1) on conflict do nothing;
+
+create table if not exists practices (
+  id            bigserial primary key,
+  body          text not null,
+  excerpt_refs  bigint[] default '{}',
+  theme_refs    bigint[] default '{}',
+  status        text not null default 'proposed',
+                -- proposed | accepted | declined | tried | completed
+  outcome       text,
+  scope         text default 'weekly',
+                -- weekly | on_demand | per_excerpt
+  metadata      jsonb default '{}'::jsonb,
+  created_at    timestamptz not null default now(),
+  accepted_at   timestamptz,
+  tried_at      timestamptz,
+  completed_at  timestamptz
+);
+
+create index if not exists practices_status_idx     on practices (status);
+create index if not exists practices_created_at_idx on practices (created_at desc);
+
 -- ─── Notes ─────────────────────────────────────────────────────────────
 -- Single-user app. No RLS; the Neon connection string is the sole gate.
 -- If Wordspace ever opens up, add auth.users + RLS at that point.
